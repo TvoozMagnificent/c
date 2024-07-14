@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        p {
+            font-family: AndaleMono;
+            font-size: 144px;
+            text-align: center;
+        }
+        input[type="number"] {
+            font-family: AndaleMono;
+            font-size: 144px;
+            width: 400px;
+            text-align: center;
+            padding: 10px;
+            border: 10px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<p><span id="x">x</span> x <span id="y">y</span> = <input type="number" id="answer"></p>
+
+<script>
+    let xSpan = document.getElementById("x");
+    let ySpan = document.getElementById("y");
+    let answerInput = document.getElementById("answer");
+
+    function reset() {
+        let randomNumber1 = Math.floor(Math.random() * 90 + 10);
+        let randomNumber2 = Math.floor(Math.random() * 90 + 10);
+        xSpan.textContent = String(randomNumber1);
+        ySpan.textContent = String(randomNumber2);
+        answerInput.value = ''; // Clear input field
+    }
+
+    function check() {
+        let answer = parseInt(answerInput.value);
+        let num1 = parseInt(xSpan.textContent);
+        let num2 = parseInt(ySpan.textContent);
+        let product = num1 * num2;
+        if (answer === product) {
+            reset();
+        }
+    }
+
+    answerInput.addEventListener('input', check); // Use 'input' for immediate feedback
+
+    reset(); // Initialize with random numbers
+</script>
+
+</body>
+</html>
