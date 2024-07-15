@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        #question {
+            font-family: AndaleMono;
+            font-size: 144px;
+            text-align: center;
+        }
+        #counter {
+            font-family: AndaleMono;
+            font-size: 28px;
+            text-align: center;
+        }
+        input[type="number"] {
+            font-family: AndaleMono;
+            font-size: 144px;
+            width: 400px;
+            text-align: center;
+            padding: 0 10px;
+            border: 10px solid black;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<p id='question'><span id="x">x</span> x <span id="y">y</span> = <input type="number" id="answer"></p>
+
+<canvas id="heatmap" width="630" height="630"></canvas>
+<p id='counter'>Problems answered: <span id="answeredCount">0</span></p>
+
+<script>
+
+let xSpan = document.getElementById("x");
+let ySpan = document.getElementById("y");
+let answerInput = document.getElementById("answer");
+let answeredCountSpan = document.getElementById("answeredCount");
+let heatmapCanvas = document.getElementById("heatmap");
+let ctx = heatmapCanvas.getContext("2d");
+
+const rows = 90; // Number of rows in the heatmap grid
+const cols = 90; // Number of columns in the heatmap grid
+const cellSize = 7; // Size of each cell in the heatmap
+
+let answeredProblems = []; // Array to store answered problems
+let totalProblems = rows * cols; // Total number of problems
+
+// Initialize answered problems array from localStorage or generate new
+if (localStorage.getItem("answeredProblems")) {
+    answeredProblems = JSON.parse(localStorage.getItem("answeredProblems"));
+} else {
+    answeredProblems = new Array(totalProblems).fill(false);
+}
+
+function reset() {
+    let randomNumber1 = Math.floor(Math.random() * 90 + 10);
+    let randomNumber2 = Math.floor(Math.random() * 90 + 10);
+    xSpan.textContent = String(randomNumber1);
+    ySpan.textContent = String(randomNumber2);
+    answerInput.value = ''; // Clear input field
+}
+
+function stringify(number) {
+    let helper = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+    let string = "";
+    while (number > 9) {
+        string = " " + helper[number] + string;
+        number = Math.floor(number / 10);
+    }
+    return helper[number] + string;
+}
+
+function check() {
+    let answer = answerInput.value;
+    let num1 = parseInt(xSpan.textContent);
+    let num2 = parseInt(ySpan.textContent);
+    let product = num1 * num2;
+    if (answer === stringify(product)) {
+        // Mark the problem as answered
+        let index = (parseInt(xSpan.textContent)-10) * cols + (parseInt(ySpan.textContent)-10);
+        answeredProblems[index] = true;
+        localStorage.setItem("answeredProblems", JSON.stringify(answeredProblems));
+        
+        // Update answered count
+        let answeredCount = answeredProblems.filter(ans => ans).length;
+        answeredCountSpan.textContent = answeredCount;
+
+        // Draw heatmap
+        drawHeatmap();
+
+        // Check if all problems are answered
+        if (answeredCount === totalProblems) {
+            // Reset progress if all problems are answered
+            localStorage.removeItem("answeredProblems");
+            answeredProblems = new Array(totalProblems).fill(false);
+            answeredCountSpan.textContent = 0;
+        }
+
+        reset(); // Get a new problem
+    }
+}
+
+function drawHeatmap() {
+    ctx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
+    ctx.fillStyle = "black"; // Red color with transparency
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            let index = i * cols + j;
+            if (answeredProblems[index]) {
+                ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+            }
+        }
+    }
+}
+
+answerInput.addEventListener('input', check); // Use 'input' for immediate feedback
+
+reset(); // Initialize with random numbers
+let answeredCount = answeredProblems.filter(ans => ans).length;
+answeredCountSpan.textContent = answeredCount;
+drawHeatmap(); // Draw initial heatmap based on stored answers
+
+</script>
+
+</body>
+</html>
