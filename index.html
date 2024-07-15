@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+<head>
     <style>
         #question {
             font-family: AndaleMono;
@@ -46,16 +47,69 @@ const rows = 90; // Number of rows in the heatmap grid
 const cols = 90; // Number of columns in the heatmap grid
 const cellSize = 7; // Size of each cell in the heatmap
 
-let answeredProblems = []; // Array to store answered problems
-let totalProblems = rows * cols; // Total number of problems
+let answeredProblems = [];
 
-// Initialize answered problems array from localStorage or generate new
-if (localStorage.getItem("answeredProblems")) {
-    answeredProblems = JSON.parse(localStorage.getItem("answeredProblems"));
-} else {
-    answeredProblems = new Array(totalProblems).fill(false);
+// Function to set a cookie
+function setCookie(cname, cvalue, exdays) {
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
 
+// Function to get a cookie value by name
+function getCookie(cname) {
+    const name = cname + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) === 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+// Initialize answered problems array from localStorage or cookie or generate new
+let localStorageSupported = false;
+try {
+    localStorage.setItem('test', 'test');
+    localStorage.removeItem('test');
+    localStorageSupported = true;
+} catch (e) {
+    console.warn('localStorage is not supported or is disabled.');
+}
+
+if (localStorageSupported) {
+    const localStorageData = localStorage.getItem("answeredProblems");
+    if (localStorageData) {
+        answeredProblems = JSON.parse(localStorageData);
+    } else {
+        answeredProblems = new Array(rows * cols).fill(false);
+    }
+} else {
+    const cookieValue = getCookie("answeredProblems");
+    if (cookieValue !== "") {
+        answeredProblems = JSON.parse(cookieValue);
+    } else {
+        answeredProblems = new Array(rows * cols).fill(false);
+    }
+}
+
+// Function to update answered problems in the storage (localStorage or cookie)
+function updateStorage() {
+    if (localStorageSupported) {
+        localStorage.setItem("answeredProblems", JSON.stringify(answeredProblems));
+    } else {
+        setCookie("answeredProblems", JSON.stringify(answeredProblems), 30); // 30 days expiry
+    }
+}
+
+// Function to reset and generate new problem
 function reset() {
     let randomNumber1 = Math.floor(Math.random() * 90 + 10);
     let randomNumber2 = Math.floor(Math.random() * 90 + 10);
@@ -64,6 +118,7 @@ function reset() {
     answerInput.value = ''; // Clear input field
 }
 
+// Function to check the answer
 function check() {
     let answer = parseInt(answerInput.value);
     let num1 = parseInt(xSpan.textContent);
@@ -71,9 +126,9 @@ function check() {
     let product = num1 * num2;
     if (answer === product) {
         // Mark the problem as answered
-        let index = (parseInt(xSpan.textContent)-10) * cols + (parseInt(ySpan.textContent)-10);
+        let index = (num1 - 10) * cols + (num2 - 10);
         answeredProblems[index] = true;
-        localStorage.setItem("answeredProblems", JSON.stringify(answeredProblems));
+        updateStorage(); // Update the storage with the new answered problems
         
         // Update answered count
         let answeredCount = answeredProblems.filter(ans => ans).length;
@@ -83,10 +138,14 @@ function check() {
         drawHeatmap();
 
         // Check if all problems are answered
-        if (answeredCount === totalProblems) {
+        if (answeredCount === rows * cols) {
             // Reset progress if all problems are answered
-            localStorage.removeItem("answeredProblems");
-            answeredProblems = new Array(totalProblems).fill(false);
+            if (localStorageSupported) {
+                localStorage.removeItem("answeredProblems");
+            } else {
+                setCookie("answeredProblems", "", -1); // Remove the cookie
+            }
+            answeredProblems = new Array(rows * cols).fill(false);
             answeredCountSpan.textContent = 0;
         }
 
@@ -94,9 +153,10 @@ function check() {
     }
 }
 
+// Function to draw the heatmap based on answered problems
 function drawHeatmap() {
     ctx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
-    ctx.fillStyle = "black"; // Red color with transparency
+    ctx.fillStyle = "black"; // Fill color for answered problems
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             let index = i * cols + j;
@@ -107,9 +167,11 @@ function drawHeatmap() {
     }
 }
 
-answerInput.addEventListener('input', check); // Use 'input' for immediate feedback
+// Event listener for input change
+answerInput.addEventListener('input', check);
 
-reset(); // Initialize with random numbers
+// Initialize the page
+reset();
 let answeredCount = answeredProblems.filter(ans => ans).length;
 answeredCountSpan.textContent = answeredCount;
 drawHeatmap(); // Draw initial heatmap based on stored answers
