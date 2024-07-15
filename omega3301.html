@@ -68,7 +68,7 @@ function stringify(number) {
     let helper = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
     let string = "";
     while (number > 9) {
-        string = " " + helper[number] + string;
+        string = " " + helper[number % 10] + string;
         number = Math.floor(number / 10);
     }
     return helper[number] + string;
