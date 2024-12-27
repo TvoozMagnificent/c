@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #question {
+            font-family: AndaleMono;
+            font-size: 144px;
+            text-align: center;
+        }
+        #counter {
+            font-family: AndaleMono;
+            font-size: 28px;
+            text-align: center;
+        }
+        input[type="number"] {
+            font-family: AndaleMono;
+            font-size: 144px;
+            width: 400px;
+            text-align: center;
+            padding: 0 10px;
+            border: 10px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<p id='question'><span id="x">x</span> x <span id="y">y</span> = <input type="number" id="answer"></p>
+<p id='counter'>Problems solved: <span id="solvedCount">0</span></p>
+
+<script>
+
+let xSpan = document.getElementById("x");
+let ySpan = document.getElementById("y");
+let answerInput = document.getElementById("answer");
+let solvedCountSpan = document.getElementById("solvedCount");
+
+let totalSolved = 0;  // Variable to track the total number of problems solved
+
+// Function to set a cookie
+function setCookie(cname, cvalue, exdays) {
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+// Function to get a cookie value by name
+function getCookie(cname) {
+    const name = cname + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) === 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+// Initialize total solved count from localStorage or cookie
+let localStorageSupported = false;
+try {
+    localStorage.setItem('test', 'test');
+    localStorage.removeItem('test');
+    localStorageSupported = true;
+} catch (e) {
+    console.warn('localStorage is not supported or is disabled.');
+}
+
+if (localStorageSupported) {
+    const localStorageData = localStorage.getItem("totalSolved");
+    if (localStorageData) {
+        totalSolved = parseInt(localStorageData);
+    }
+} else {
+    const cookieValue = getCookie("totalSolved");
+    if (cookieValue !== "") {
+        totalSolved = parseInt(cookieValue);
+    }
+}
+
+// Function to update the total solved count in storage (localStorage or cookie)
+function updateStorage() {
+    if (localStorageSupported) {
+        localStorage.setItem("totalSolved", totalSolved);
+    } else {
+        setCookie("totalSolved", totalSolved, 30); // 30 days expiry
+    }
+}
+
+// Function to reset and generate new problem
+function reset() {
+    let randomNumber1 = Math.floor(Math.random() * 900 + 100); // Random number between 100 and 999
+    let randomNumber2 = Math.floor(Math.random() * 900 + 100); // Random number between 100 and 999
+    xSpan.textContent = String(randomNumber1);
+    ySpan.textContent = String(randomNumber2);
+    answerInput.value = ''; // Clear input field
+}
+
+// Function to check the answer
+function check() {
+    let answer = parseInt(answerInput.value);
+    let num1 = parseInt(xSpan.textContent);
+    let num2 = parseInt(ySpan.textContent);
+    let product = num1 * num2;
+    if (answer === product) {
+        // Increment the solved problems counter
+        totalSolved++;
+        solvedCountSpan.textContent = totalSolved;
+
+        // Update storage with the new solved problems count
+        updateStorage();
+
+        // Generate a new problem
+        reset();
+    }
+}
+
+// Event listener for input change
+answerInput.addEventListener('input', check);
+
+// Initialize the page
+reset();
+solvedCountSpan.textContent = totalSolved;  // Display the total solved count initially
+
+</script>
+
+</body>
+</html>
